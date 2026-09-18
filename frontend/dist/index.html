@@ -1,0 +1,1420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>IBVAP V1 — Intelligent Border Video Analytics Platform</title>
+<style>
+:root {
+  --bg: #e2e8f0;
+  --dk: #b8c4d4;
+  --lt: #ffffff;
+  --ink: #1e293b;
+  --ink-mut: #64748b;
+  --acc: #3b82f6;
+  --acc-glow: rgba(59, 130, 246, 0.45);
+  --ok: #10b981;
+  --ok-glow: rgba(16, 185, 129, 0.4);
+  --warn: #f59e0b;
+  --warn-glow: rgba(245, 158, 11, 0.45);
+  --bad: #ef4444;
+  --bad-glow: rgba(239, 68, 68, 0.45);
+  --human: #2563eb;
+  --human-bg: #dbeafe;
+  --veh: #d97706;
+  --veh-bg: #fef3c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.wrap {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Neumorphic Base Styles */
+.card {
+  background: var(--bg);
+  border-radius: 20px;
+  box-shadow: 8px 8px 18px var(--dk), -8px -8px 18px var(--lt);
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.inset {
+  border-radius: 14px;
+  box-shadow: inset 5px 5px 10px var(--dk), inset -5px -5px 10px var(--lt);
+  padding: 14px;
+  background: rgba(226, 232, 240, 0.6);
+}
+
+/* Light-Responsive Interactive Buttons */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: linear-gradient(145deg, #edf2f7, #d8e2ec);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 6px 6px 14px var(--dk), -6px -6px 14px var(--lt);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  transform: translate(-50%, -50%);
+  width: 130px;
+  height: 130px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.btn:hover::before { opacity: 1; }
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px var(--acc-glow), 7px 7px 16px var(--dk), -7px -7px 16px var(--lt);
+  color: var(--acc);
+}
+
+.btn:active, .btn.active {
+  transform: translateY(1px);
+  box-shadow: inset 4px 4px 8px var(--dk), inset -4px -4px 8px var(--lt), 0 0 10px var(--acc-glow);
+  color: var(--acc);
+  background: #dbe4ee;
+}
+
+.btn-primary:hover { box-shadow: 0 0 20px var(--acc-glow), 6px 6px 14px var(--dk), -6px -6px 14px var(--lt); }
+.btn-warn:hover { box-shadow: 0 0 20px var(--warn-glow), 6px 6px 14px var(--dk), -6px -6px 14px var(--lt); color: var(--warn); }
+.btn-alert:hover { box-shadow: 0 0 22px var(--bad-glow), 6px 6px 14px var(--dk), -6px -6px 14px var(--lt); color: var(--bad); }
+.btn-ok:hover { box-shadow: 0 0 20px var(--ok-glow), 6px 6px 14px var(--dk), -6px -6px 14px var(--lt); color: var(--ok); }
+.btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 10px; }
+
+/* Navigation Tab Bar */
+nav.tab-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-mut);
+}
+
+.tab-btn.active {
+  color: var(--acc);
+  box-shadow: inset 4px 4px 8px var(--dk), inset -4px -4px 8px var(--lt), 0 0 12px var(--acc-glow);
+  background: #dbe4ee;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Header */
+header.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.logo-block { display: flex; align-items: center; gap: 14px; }
+.logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--acc);
+  box-shadow: 6px 6px 12px var(--dk), -6px -6px 12px var(--lt);
+  background: var(--bg);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 5px 5px 10px var(--dk), -5px -5px 10px var(--lt);
+}
+
+.pill.ok { color: var(--ok); }
+.pill.bad { color: var(--bad); }
+
+.beacon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}
+
+/* Grid & Layout */
+.grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1.35fr 1fr;
+  gap: 20px;
+}
+
+@media(max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+h2 {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 14px;
+  color: var(--ink-mut);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Media Box */
+.media-box {
+  position: relative;
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #cbd5e1;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 4px 4px 8px var(--dk), inset -4px -4px 8px var(--lt);
+}
+
+.media-box img, .media-box video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.media-box canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.hud-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+/* Stats */
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.stat { flex: 1; min-width: 90px; text-align: center; padding: 12px 8px; }
+.stat small { font-size: 11px; font-weight: 700; color: var(--ink-mut); text-transform: uppercase; }
+.stat b { font-size: 22px; display: block; margin-top: 4px; color: var(--ink); }
+
+.progress-bar-wrap {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  box-shadow: inset 2px 2px 4px var(--dk);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #3b82f6);
+  border-radius: 999px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* Events Feed */
+.filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.feed-list {
+  max-height: 520px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.evt {
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.evt:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.3), 8px 8px 16px var(--dk), -8px -8px 16px var(--lt);
+}
+
+.evt.active {
+  border-left: 4px solid var(--acc);
+  box-shadow: inset 3px 3px 6px var(--dk), inset -3px -3px 6px var(--lt), 0 0 12px var(--acc-glow);
+}
+
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+.tag.HUMAN { background: var(--human-bg); color: var(--human); }
+.tag.VEHICLE { background: var(--veh-bg); color: var(--veh); }
+.tag.CRITICAL { background: #fee2e2; color: var(--bad); }
+.tag.MEDIUM { background: #fef3c7; color: var(--veh); }
+
+/* Clip Player Controls */
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.scrub-bar {
+  flex: 1;
+  min-width: 120px;
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: #cbd5e1;
+  box-shadow: inset 1px 1px 3px var(--dk);
+  outline: none;
+  cursor: pointer;
+}
+
+.scrub-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--acc);
+  box-shadow: 0 0 6px var(--acc-glow);
+  cursor: pointer;
+}
+
+/* Tab Views Container */
+.tab-view { display: none; }
+.tab-view.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tables in History View */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.data-table th {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-mut);
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.data-table tr.row-card {
+  background: var(--bg);
+  box-shadow: 4px 4px 8px var(--dk), -4px -4px 8px var(--lt);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.data-table tr.row-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px var(--acc-glow), 5px 5px 10px var(--dk), -5px -5px 10px var(--lt);
+}
+
+.data-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.data-table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+.data-table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+/* Engine Grid */
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+
+.engine-card { padding: 18px; }
+.engine-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.engine-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.engine-meta { font-size: 12px; color: var(--ink-mut); line-height: 1.7; }
+.engine-meta b { color: var(--ink); }
+
+/* Alerts list */
+.alert-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: var(--bg);
+  box-shadow: 4px 4px 8px var(--dk), -4px -4px 8px var(--lt);
+  transition: all 0.25s ease;
+}
+
+.alert-card:hover {
+  box-shadow: 0 0 14px var(--warn-glow), 5px 5px 10px var(--dk), -5px -5px 10px var(--lt);
+}
+
+.alert-card.critical { border-left: 4px solid var(--bad); }
+.alert-card.medium { border-left: 4px solid var(--warn); }
+.alert-card.acked { opacity: 0.55; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  padding: 16px 22px;
+  border-radius: 18px;
+  background: var(--bg);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15), 8px 8px 18px var(--dk), -8px -8px 18px var(--lt);
+  font-weight: 700;
+  display: none;
+  animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+  from { transform: translateY(40px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Architecture Flow Steps */
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+.flow-step {
+  flex: 1;
+  min-width: 180px;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  background: var(--bg);
+  box-shadow: 6px 6px 12px var(--dk), -6px -6px 12px var(--lt);
+}
+
+.flow-step h3 { font-size: 13px; font-weight: 800; margin-bottom: 6px; color: var(--acc); }
+.flow-step p { font-size: 11px; color: var(--ink-mut); line-height: 1.5; }
+.flow-arrow { font-size: 20px; font-weight: 900; color: var(--ink-mut); opacity: 0.7; }
+
+small.mut { color: var(--ink-mut); font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header & Top Controls -->
+  <header class="top card">
+    <div class="logo-block">
+      <div class="logo">IB</div>
+      <div>
+        <h1 style="font-size:18px;font-weight:800;letter-spacing:-0.3px">IBVAP V1 &bull; Border Surveillance Platform</h1>
+        <small class="mut">Intelligent Video Analytics Layer for CCTV Infrastructure</small>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-sm" id="btnAudioToggle">🔊 Sound ON</button>
+      <div id="healthPill" class="pill ok"><span class="beacon"></span> <span id="healthText">ONLINE</span></div>
+    </div>
+  </header>
+
+  <!-- Multi-Tab Navigation Bar -->
+  <nav class="tab-nav card inset" style="padding:10px 14px">
+    <button class="btn tab-btn active" data-tab="live">📹 Live Surveillance</button>
+    <button class="btn tab-btn" data-tab="events">📋 Events Explorer</button>
+    <button class="btn tab-btn" data-tab="status">⚡ Engine & System Status</button>
+    <button class="btn tab-btn" data-tab="alerts">🔔 Alerts (<span id="tabAlertCount">0</span>)</button>
+    <button class="btn tab-btn" data-tab="architecture">🏛️ Architecture & Guide</button>
+  </nav>
+
+  <!-- ================================================================= -->
+  <!-- TAB 1: LIVE SURVEILLANCE LANDING PAGE                             -->
+  <!-- ================================================================= -->
+  <div id="view-live" class="tab-view active">
+    <div class="grid">
+
+      <!-- Col 1: Live CCTV Camera Feed & Gating Stats -->
+      <section class="card">
+        <h2>
+          <span>Live Camera Ingestion</span>
+          <span id="srcBadge" class="pill ok" style="font-size:10px;padding:3px 10px">CAM_01</span>
+        </h2>
+        
+        <div class="media-box inset">
+          <span class="hud-tag">LIVE CCTV STREAM</span>
+          <img id="live" alt="Connecting to stream..."/>
+        </div>
+
+        <div class="row" style="margin-top:16px">
+          <div class="card stat"><small>Ingested Frames</small><b id="stTotal">0</b></div>
+          <div class="card stat"><small>Motion Triggers</small><b id="stMotion" style="color:var(--acc)">0</b></div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="card stat">
+            <small>AI Workload Saved</small>
+            <b id="stSupp" style="color:var(--ok)">0.0%</b>
+            <div class="progress-bar-wrap"><div id="suppFill" class="progress-bar-fill"></div></div>
+          </div>
+          <div class="card stat"><small>Targets Found</small><b id="stTargets" style="color:var(--warn)">0</b></div>
+        </div>
+
+        <div class="inset" style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span>SSE Stream: <b id="sseState" style="color:var(--ok)">connected</b></span>
+            <span class="mut" id="streamHealth">Push Heartbeat OK</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Col 2: Event Moving Clip Viewer with Canvas Overlays -->
+      <section class="card">
+        <h2>
+          <span>Moving Event Clip Viewer</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-warn" id="btnQuickAlerts">Alerts (<span id="quickAlertCount">0</span>)</button>
+            <button class="btn btn-sm" id="btnSync">Sync</button>
+          </div>
+        </h2>
+
+        <div id="detail" class="inset">
+          <small class="mut">Select any event from the feed to inspect AI classification and stream the pre/post moving clip.</small>
+        </div>
+
+        <!-- Video Player & Canvas Overlays -->
+        <div id="clipContainer" style="display:none;margin-top:14px">
+          <div class="media-box inset" style="position:relative">
+            <span class="hud-tag" style="background:rgba(37,99,235,0.85)">EVIDENCE CLIP</span>
+            <video id="clip" playsinline></video>
+            <canvas id="boxCanvas"></canvas>
+          </div>
+
+          <!-- Player Controls -->
+          <div class="player-controls">
+            <button class="btn btn-sm btn-primary" id="btnPlayPause">▶ Play</button>
+            <button class="btn btn-sm" id="btnStepBack">&laquo; -1s</button>
+            <button class="btn btn-sm" id="btnStepFwd">+1s &raquo;</button>
+            <input type="range" id="clipScrubber" class="scrub-bar" min="0" max="100" value="0"/>
+            <button class="btn btn-sm" id="btnSpeed">1.0x</button>
+            <button class="btn btn-sm" id="btnLoop">Loop</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Col 3: Real-Time Live Events Stream -->
+      <section class="card">
+        <h2>
+          <span>Live Motion Events</span>
+          <span class="mut" id="eventCountLabel">0 events</span>
+        </h2>
+
+        <div class="filter-row">
+          <button class="btn btn-sm active" data-filter="ALL">All</button>
+          <button class="btn btn-sm" data-filter="HUMAN">Humans</button>
+          <button class="btn btn-sm" data-filter="VEHICLE">Vehicles</button>
+          <button class="btn btn-sm" data-filter="MOTION">Motion</button>
+        </div>
+
+        <div class="feed-list" id="feed">
+          <div class="inset" style="text-align:center"><small class="mut">Waiting for incoming events...</small></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- TAB 2: EVENTS EXPLORER LANDING PAGE                               -->
+  <!-- ================================================================= -->
+  <div id="view-events" class="tab-view">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="margin-bottom:4px">Events History & Evidence Archive</h2>
+          <small class="mut">Review, filter, and inspect motion-triggered events with their persistent short evidence clips.</small>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="text" id="eventSearchInput" placeholder="Filter by Camera or ID..." class="inset" style="border:none;outline:none;padding:8px 14px;font-size:12px;width:200px;border-radius:12px"/>
+          <button class="btn btn-sm" id="btnRefreshEvents">Refresh Archive</button>
+        </div>
+      </div>
+
+      <!-- Events Table -->
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Event ID</th>
+              <th>Camera Source</th>
+              <th>Timestamp</th>
+              <th>Motion Score</th>
+              <th>Engine 2 Classification</th>
+              <th>Target Confidence</th>
+              <th>Evidence Clip</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="eventsArchiveBody">
+            <tr><td colspan="8" style="text-align:center"><small class="mut">Loading archive...</small></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- TAB 3: ENGINE & SYSTEM STATUS LANDING PAGE                        -->
+  <!-- ================================================================= -->
+  <div id="view-status" class="tab-view">
+    <div class="card">
+      <h2 style="margin-bottom:6px"><span>Connected Pipeline Telemetry & Performance Benchmarks</span></h2>
+      <small class="mut">Real-time operational health across all four functional tiers of the IBVAP platform.</small>
+
+      <div class="engine-grid" style="margin-top:20px">
+
+        <!-- Tier 1: Video Ingestion -->
+        <div class="card inset engine-card">
+          <div class="engine-header">
+            <span class="engine-title">📹 Member 1: Video Ingestion</span>
+            <span id="tier1Badge" class="pill ok" style="font-size:10px;padding:3px 10px">CONNECTED</span>
+          </div>
+          <div class="engine-meta">
+            Active Camera ID: <b id="t1SourceId">CAM_01</b><br/>
+            Stream Ingestion: <b>OpenCV File / RTSP Reader</b><br/>
+            Rolling Frame Buffer: <b>90 frames (Bounded In-Memory Ring)</b><br/>
+            Ingested Frames: <b id="t1Ingested">0</b><br/>
+            Stream Status: <b id="t1Status" style="color:var(--ok)">CONNECTED</b>
+          </div>
+        </div>
+
+        <!-- Tier 2: Engine 1 Motion Detection -->
+        <div class="card inset engine-card">
+          <div class="engine-header">
+            <span class="engine-title">⚡ Member 2: Engine 1 Motion Gate</span>
+            <span id="tier2Badge" class="pill ok" style="font-size:10px;padding:3px 10px">READY</span>
+          </div>
+          <div class="engine-meta">
+            Algorithm: <b>OpenCV Dual-Frame Differencing</b><br/>
+            Min Area Threshold: <b>400 px &bull; Blur: 21x21 Gaussian</b><br/>
+            Suppressed Frames: <b id="t2SuppCount" style="color:var(--ok)">0</b><br/>
+            AI Workload Saved: <b id="t2SuppRatio" style="color:var(--ok)">0.0%</b><br/>
+            Gate Decision Latency: <b>&lt; 2.5 ms / frame</b>
+          </div>
+        </div>
+
+        <!-- Tier 3: Engine 2 YOLO AI -->
+        <div class="card inset engine-card">
+          <div class="engine-header">
+            <span class="engine-title">🧠 Member 3: Engine 2 YOLO AI</span>
+            <span id="tier3Badge" class="pill ok" style="font-size:10px;padding:3px 10px">ACTIVE</span>
+          </div>
+          <div class="engine-meta">
+            Model Weights: <b id="t3Model">yolov8n.pt</b><br/>
+            Classes Detected: <b>HUMAN &bull; VEHICLE &bull; NON_TARGET</b><br/>
+            Total YOLO Inferences: <b id="t3Inferences">0</b><br/>
+            Average Latency: <b id="t3AvgLatency" style="color:var(--acc)">0.0 ms</b><br/>
+            Target Hits Confirmed: <b id="t3Hits" style="color:var(--warn)">0</b>
+          </div>
+        </div>
+
+        <!-- Tier 4: FastAPI & Persistence -->
+        <div class="card inset engine-card">
+          <div class="engine-header">
+            <span class="engine-title">🚀 Member 4: API & Persistence</span>
+            <span id="tier4Badge" class="pill ok" style="font-size:10px;padding:3px 10px">READY</span>
+          </div>
+          <div class="engine-meta">
+            REST & SSE Server: <b>FastAPI + Uvicorn</b><br/>
+            Metadata Database: <b>SQLite (storage/ibvap_events.db)</b><br/>
+            Total Recorded Events: <b id="t4EventsCount">0</b><br/>
+            Clip Storage: <b>storage/event_clips/ (MP4)</b><br/>
+            Transport: <b>Server-Sent Events (/events/stream)</b>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Comparative Benchmark Card -->
+      <div class="card inset" style="margin-top:20px;padding:18px">
+        <h3 style="font-size:14px;font-weight:800;margin-bottom:8px">💡 Progressive Delegation vs Continuous Heavy AI</h3>
+        <p style="font-size:12px;color:var(--ink-mut);line-height:1.6">
+          Traditional CCTV systems continuously run heavy neural networks on every frame (25–30 FPS), consuming immense wattage and overheating edge hardware during static border hours.
+          <br/>
+          <b>IBVAP V1 Advantage:</b> Engine 1 processes raw frames in sub-millisecond OpenCV time and filters out static scenes. Engine 2 is invoked <b>strictly when meaningful movement occurs</b>, slashing AI computation by <span id="summarySuppRatio" style="font-weight:800;color:var(--ok)">up to 80-95%</span>.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- TAB 4: OPERATOR ALERTS LANDING PAGE                               -->
+  <!-- ================================================================= -->
+  <div id="view-alerts" class="tab-view">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="margin-bottom:4px">Operator Alerts & Human/Vehicle Notifications</h2>
+          <small class="mut">Real-time alerts triggered by confirmed targets with cooldown deduplication.</small>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-sm btn-ok" id="btnAckAll">Acknowledge All</button>
+          <button class="btn btn-sm" id="btnRefreshAlerts">Refresh Alerts</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:18px">
+        <div class="card stat"><small>Total Evaluated</small><b id="altEvaluated">0</b></div>
+        <div class="card stat"><small>Alerts Raised</small><b id="altTotal" style="color:var(--bad)">0</b></div>
+        <div class="card stat"><small>Dupes Cooled</small><b id="altDupes" style="color:var(--ink-mut)">0</b></div>
+        <div class="card stat"><small>Unread Alerts</small><b id="altUnread" style="color:var(--warn)">0</b></div>
+      </div>
+
+      <div id="fullAlertsList">
+        <div class="inset" style="text-align:center"><small class="mut">No alert notifications recorded yet.</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- TAB 5: ARCHITECTURE & GUIDE LANDING PAGE                          -->
+  <!-- ================================================================= -->
+  <div id="view-architecture" class="tab-view">
+    <div class="card">
+      <h2 style="margin-bottom:6px"><span>System Architecture & Operational Pipeline</span></h2>
+      <small class="mut">Understanding the end-to-end data flow from camera frame acquisition to operator notification.</small>
+
+      <!-- Step-by-Step Flow Diagram -->
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <h3>1. Ingestion (M1)</h3>
+          <p>RTSP / File stream read into in-memory FramePackets. Bounded 90-frame ring buffer maintains pre-motion context.</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <h3>2. Motion Gate (M2)</h3>
+          <p>Engine 1 OpenCV differencing and contour clustering. Static frames are suppressed immediately.</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <h3>3. Heavy AI (M3)</h3>
+          <p>Core Orchestrator forwards motion ROI to Engine 2. YOLOv8 identifies HUMAN & VEHICLE targets.</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <h3>4. Evidence Clip (M4)</h3>
+          <p>Pre-motion buffer + trigger frame + post-motion frames are assembled into an MP4 clip.</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step">
+          <h3>5. Operator UI (M4)</h3>
+          <p>FastAPI pushes real-time Server-Sent Events (SSE) to this Neumorphic Dashboard.</p>
+        </div>
+      </div>
+
+      <!-- Conceptual FAQ Cards -->
+      <div class="row" style="margin-top:16px">
+        <div class="card inset" style="flex:1;min-width:280px;padding:16px">
+          <h4 style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:6px">Why Not Save Full Video?</h4>
+          <p style="font-size:12px;color:var(--ink-mut);line-height:1.5">
+            Border cameras run 24/7. Saving hundreds of hours of empty fence lines exhausts local disk space. IBVAP records <b>only short bounded event clips</b> centered on detected activity.
+          </p>
+        </div>
+        <div class="card inset" style="flex:1;min-width:280px;padding:16px">
+          <h4 style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:6px">How Does Alert Cooldown Work?</h4>
+          <p style="font-size:12px;color:var(--ink-mut);line-height:1.5">
+            A human walking across a camera takes 10–20 seconds. Instead of bombarding the operator with 30 alerts per second, the AlertManager applies a configurable cooldown (e.g. 5s) per camera/target.
+          </p>
+        </div>
+        <div class="card inset" style="flex:1;min-width:280px;padding:16px">
+          <h4 style="font-size:13px;font-weight:800;color:var(--acc);margin-bottom:6px">Offline Independence</h4>
+          <p style="font-size:12px;color:var(--ink-mut);line-height:1.5">
+            IBVAP V1 operates 100% locally on the edge machine. Model weights (`yolov8n.pt`), SQLite database, and video processing require <b>zero external cloud connectivity</b>.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Audio/Toast Alerts -->
+<div id="toast" class="toast"></div>
+
+<script>
+(function() {
+  // DOM Elements - Navigation & Views
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabViews = document.querySelectorAll('.tab-view');
+  const tabAlertCount = document.getElementById('tabAlertCount');
+  const quickAlertCount = document.getElementById('quickAlertCount');
+
+  // DOM Elements - Surveillance View
+  const stTotal = document.getElementById('stTotal');
+  const stMotion = document.getElementById('stMotion');
+  const stSupp = document.getElementById('stSupp');
+  const suppFill = document.getElementById('suppFill');
+  const stTargets = document.getElementById('stTargets');
+  const sseState = document.getElementById('sseState');
+  const srcBadge = document.getElementById('srcBadge');
+  const healthPill = document.getElementById('healthPill');
+  const healthText = document.getElementById('healthText');
+  const liveImg = document.getElementById('live');
+  const feed = document.getElementById('feed');
+  const eventCountLabel = document.getElementById('eventCountLabel');
+  const detail = document.getElementById('detail');
+  const clip = document.getElementById('clip');
+  const clipContainer = document.getElementById('clipContainer');
+  const boxCanvas = document.getElementById('boxCanvas');
+  const ctx = boxCanvas.getContext('2d');
+  const btnPlayPause = document.getElementById('btnPlayPause');
+  const btnStepBack = document.getElementById('btnStepBack');
+  const btnStepFwd = document.getElementById('btnStepFwd');
+  const clipScrubber = document.getElementById('clipScrubber');
+  const btnSpeed = document.getElementById('btnSpeed');
+  const btnLoop = document.getElementById('btnLoop');
+  const btnAudioToggle = document.getElementById('btnAudioToggle');
+  const btnSync = document.getElementById('btnSync');
+  const btnQuickAlerts = document.getElementById('btnQuickAlerts');
+  const toast = document.getElementById('toast');
+
+  // DOM Elements - Archive & Status Views
+  const eventsArchiveBody = document.getElementById('eventsArchiveBody');
+  const eventSearchInput = document.getElementById('eventSearchInput');
+  const btnRefreshEvents = document.getElementById('btnRefreshEvents');
+  const t1SourceId = document.getElementById('t1SourceId');
+  const t1Ingested = document.getElementById('t1Ingested');
+  const t1Status = document.getElementById('t1Status');
+  const t2SuppCount = document.getElementById('t2SuppCount');
+  const t2SuppRatio = document.getElementById('t2SuppRatio');
+  const t3Model = document.getElementById('t3Model');
+  const t3Inferences = document.getElementById('t3Inferences');
+  const t3AvgLatency = document.getElementById('t3AvgLatency');
+  const t3Hits = document.getElementById('t3Hits');
+  const t4EventsCount = document.getElementById('t4EventsCount');
+  const summarySuppRatio = document.getElementById('summarySuppRatio');
+
+  // DOM Elements - Alerts View
+  const altEvaluated = document.getElementById('altEvaluated');
+  const altTotal = document.getElementById('altTotal');
+  const altDupes = document.getElementById('altDupes');
+  const altUnread = document.getElementById('altUnread');
+  const fullAlertsList = document.getElementById('fullAlertsList');
+  const btnAckAll = document.getElementById('btnAckAll');
+  const btnRefreshAlerts = document.getElementById('btnRefreshAlerts');
+
+  // App State
+  let currentTab = 'live';
+  let selectedEvent = null;
+  let eventsMap = new Map();
+  let notifications = [];
+  let currentFilter = 'ALL';
+  let isMuted = false;
+  let audioCtx = null;
+
+  // --- MOUSE LIGHT PHYSICS ---
+  document.addEventListener('mousemove', (e) => {
+    const target = e.target.closest('.btn, .evt, .card, .row-card');
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      target.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+      target.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+    }
+  });
+
+  // --- TAB ROUTING ---
+  function switchTab(tabId) {
+    currentTab = tabId;
+    window.location.hash = tabId;
+    tabBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+    tabViews.forEach(view => view.classList.toggle('active', view.id === `view-${tabId}`));
+
+    if (tabId === 'events') renderEventsArchive();
+    else if (tabId === 'alerts') renderFullAlertsList();
+    else if (tabId === 'status') updateStatus();
+  }
+
+  tabBtns.forEach(btn => {
+    btn.onclick = () => switchTab(btn.dataset.tab);
+  });
+
+  btnQuickAlerts.onclick = () => switchTab('alerts');
+
+  // Load from URL hash
+  const initialHash = window.location.hash.replace('#', '');
+  if (['live', 'events', 'status', 'alerts', 'architecture'].includes(initialHash)) {
+    switchTab(initialHash);
+  }
+
+  // Audio Alerts Synthesizer
+  function playAlertChime(isCritical) {
+    if (isMuted) return;
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = isCritical ? 'sawtooth' : 'sine';
+      osc.frequency.setValueAtTime(isCritical ? 880 : 523.25, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(isCritical ? 440 : 659.25, audioCtx.currentTime + 0.32);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.32);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.32);
+    } catch (err) {}
+  }
+
+  btnAudioToggle.onclick = () => {
+    isMuted = !isMuted;
+    btnAudioToggle.innerText = isMuted ? '🔇 Sound OFF' : '🔊 Sound ON';
+    btnAudioToggle.classList.toggle('active', !isMuted);
+  };
+
+  function showToast(msg, color) {
+    toast.innerHTML = msg;
+    toast.style.color = color || 'var(--ink)';
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4500);
+  }
+
+  // --- TELEMETRY & STATUS ---
+  function updateStatus() {
+    fetch('/status')
+      .then(res => res.json())
+      .then(data => {
+        const p = data.pipeline || {};
+        const total = p.total_frames || 0;
+        const motion = p.motion_frames || 0;
+        const supp = p.suppressed_frames || 0;
+        const suppPct = p.suppression_ratio_pct !== undefined ? p.suppression_ratio_pct : 0.0;
+        const targets = p.engine2_targets || 0;
+
+        stTotal.innerText = total.toLocaleString();
+        stMotion.innerText = motion.toLocaleString();
+        stSupp.innerText = suppPct + '%';
+        suppFill.style.width = suppPct + '%';
+        stTargets.innerText = targets.toLocaleString();
+
+        // Status Tab Telemetry
+        t1SourceId.innerText = p.source_id || 'CAM_01';
+        t1Ingested.innerText = total.toLocaleString();
+        t1Status.innerText = p.source_status || 'CONNECTED';
+        t2SuppCount.innerText = supp.toLocaleString();
+        t2SuppRatio.innerText = suppPct + '%';
+        summarySuppRatio.innerText = suppPct + '% Saved';
+
+        t3Model.innerText = p.engine2_model || 'yolov8n.pt';
+        t3Inferences.innerText = (p.engine2_frames || 0).toLocaleString();
+        t3AvgLatency.innerText = (p.avg_inference_ms || 0) + ' ms';
+        t3Hits.innerText = targets.toLocaleString();
+        t4EventsCount.innerText = (p.events_total || 0).toLocaleString();
+
+        if (p.source_id) srcBadge.innerText = p.source_id;
+
+        const a = data.alerts || {};
+        altEvaluated.innerText = a.total_evaluated || 0;
+        altTotal.innerText = a.total_alerts || 0;
+        altDupes.innerText = a.total_suppressed_dupes || 0;
+
+        healthText.innerText = 'ONLINE';
+        healthPill.className = 'pill ok';
+      })
+      .catch(() => {
+        healthText.innerText = 'OFFLINE';
+        healthPill.className = 'pill bad';
+      });
+  }
+
+  function refreshSnapshot() {
+    const img = new Image();
+    img.onload = () => { liveImg.src = img.src; };
+    img.src = '/snapshot.jpg?t=' + Date.now();
+  }
+
+  // --- FILTERS & EVENT FEED ---
+  document.querySelectorAll('.filter-row button').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.filter-row button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyEventFilter();
+    };
+  });
+
+  function applyEventFilter() {
+    let visibleCount = 0;
+    document.querySelectorAll('.evt').forEach(el => {
+      const ev = eventsMap.get(el.dataset.id);
+      if (!ev) return;
+      let show = true;
+      const dets = ev.detections || [];
+      const hasHuman = dets.some(d => d.class === 'HUMAN') || (ev.classification || '').includes('HUMAN');
+      const hasVeh = dets.some(d => d.class === 'VEHICLE') || (ev.classification || '').includes('VEHICLE');
+
+      if (currentFilter === 'HUMAN') show = hasHuman;
+      else if (currentFilter === 'VEHICLE') show = hasVeh;
+      else if (currentFilter === 'MOTION') show = !hasHuman && !hasVeh;
+
+      el.style.display = show ? 'block' : 'none';
+      if (show) visibleCount++;
+    });
+    eventCountLabel.innerText = `${visibleCount} events`;
+  }
+
+  function renderEventItem(ev) {
+    let item = document.getElementById('ev-' + ev.event_id);
+    const isNew = !item;
+    if (isNew) {
+      item = document.createElement('div');
+      item.id = 'ev-' + ev.event_id;
+      item.dataset.id = ev.event_id;
+      item.className = 'card evt';
+      item.onclick = () => selectEvent(ev.event_id);
+    }
+    eventsMap.set(ev.event_id, ev);
+
+    const timeStr = new Date((ev.timestamp || Date.now() / 1000) * 1000).toLocaleTimeString();
+    let tags = '';
+    const dets = ev.detections || [];
+    if (dets.length > 0) {
+      const classes = [...new Set(dets.map(d => d.class))];
+      tags = classes.map(c => `<span class="tag ${c}">${c}</span>`).join(' ');
+    } else if (ev.classification && ev.classification !== 'PENDING') {
+      tags = `<span class="tag ${ev.classification}">${ev.classification}</span>`;
+    } else {
+      tags = '<span class="tag" style="opacity:.6">MOTION GATE</span>';
+    }
+
+    const confStr = ev.confidence ? `<b>${(ev.confidence * 100).toFixed(0)}%</b>` : '';
+    item.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b>${ev.source_id || 'CAM'}</b>
+        <small class="mut">${timeStr}</small>
+      </div>
+      <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+        <div>${tags} ${confStr}</div>
+        <small class="mut">${ev.clip_path ? '📹 Clip Ready' : '⏳ Processing'}</small>
+      </div>
+    `;
+
+    if (isNew) {
+      if (feed.querySelector('.inset')) feed.innerHTML = '';
+      feed.insertBefore(item, feed.firstChild);
+    }
+    applyEventFilter();
+    if (selectedEvent && selectedEvent.event_id === ev.event_id) {
+      selectEvent(ev.event_id);
+    }
+  }
+
+  // --- EVENT ARCHIVE TABLE (TAB 2) ---
+  function renderEventsArchive() {
+    const list = Array.from(eventsMap.values());
+    if (!list.length) {
+      eventsArchiveBody.innerHTML = '<tr><td colspan="8" style="text-align:center"><small class="mut">No events stored yet.</small></td></tr>';
+      return;
+    }
+
+    const q = (eventSearchInput.value || '').toLowerCase();
+    const filtered = list.filter(ev => {
+      if (!q) return true;
+      return (ev.event_id || '').toLowerCase().includes(q) ||
+             (ev.source_id || '').toLowerCase().includes(q) ||
+             (ev.classification || '').toLowerCase().includes(q);
+    });
+
+    eventsArchiveBody.innerHTML = filtered.map(ev => {
+      const timeStr = new Date((ev.timestamp || 0) * 1000).toLocaleString();
+      const confStr = ev.confidence ? `${(ev.confidence * 100).toFixed(1)}%` : '—';
+      const clipBadge = ev.clip_path ? '<span style="color:var(--ok);font-weight:700">✓ MP4 Ready</span>' : '<span class="mut">Pending</span>';
+      return `
+        <tr class="row-card" onclick="window.viewEventFromArchive('${ev.event_id}')">
+          <td><b>${ev.event_id.slice(0, 8)}...</b></td>
+          <td>${ev.source_id}</td>
+          <td><small class="mut">${timeStr}</small></td>
+          <td>${ev.motion_score || 0}</td>
+          <td><span class="tag ${ev.classification || 'PENDING'}">${ev.classification || 'PENDING'}</span></td>
+          <td><b>${confStr}</b></td>
+          <td>${clipBadge}</td>
+          <td><button class="btn btn-sm" onclick="event.stopPropagation();window.viewEventFromArchive('${ev.event_id}')">View Clip</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  eventSearchInput.oninput = renderEventsArchive;
+  btnRefreshEvents.onclick = () => { loadInitialEvents(); renderEventsArchive(); };
+
+  window.viewEventFromArchive = function(eventId) {
+    switchTab('live');
+    selectEvent(eventId);
+  };
+
+  // --- SELECTION & CLIP PLAYER ---
+  function selectEvent(eventId) {
+    document.querySelectorAll('.evt').forEach(el => el.classList.remove('active'));
+    const item = document.getElementById('ev-' + eventId);
+    if (item) item.classList.add('active');
+
+    fetch('/events/' + eventId)
+      .then(res => res.json())
+      .then(data => {
+        const ev = data.event || eventsMap.get(eventId);
+        if (!ev) return;
+        selectedEvent = ev;
+        eventsMap.set(eventId, ev);
+
+        const timeStr = new Date((ev.timestamp || 0) * 1000).toLocaleString();
+        const dets = ev.detections || [];
+        let detsHtml = dets.length ? dets.map(d => `
+          <div style="margin-top:6px;padding:6px;border-radius:8px;background:rgba(255,255,255,0.4)">
+            <span class="tag ${d.class}">${d.class}</span>
+            <b>${(d.confidence * 100).toFixed(1)}%</b>
+            <small class="mut">Box: [${d.bbox.x}, ${d.bbox.y}, ${d.bbox.width}x${d.bbox.height}]</small>
+          </div>
+        `).join('') : '<small class="mut">No target detections in this event.</small>';
+
+        detail.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b>Event ${ev.event_id.slice(0, 8)}...</b>
+            <span class="tag ${ev.classification || 'PENDING'}">${ev.classification || 'PENDING'}</span>
+          </div>
+          <div style="font-size:12px;margin-top:6px;line-height:1.5">
+            Source: <b>${ev.source_id}</b> &bull; Time: <b>${timeStr}</b><br/>
+            Motion Score: <b>${ev.motion_score || 0}</b> &bull; Status: <b>${ev.notification_status}</b>
+          </div>
+          <div style="margin-top:10px"><b>Engine 2 Detections:</b>${detsHtml}</div>
+        `;
+
+        if (ev.clip_path) {
+          clip.src = '/events/' + ev.event_id + '/clip';
+          clipContainer.style.display = 'block';
+          clip.load();
+          btnPlayPause.innerText = '▶ Play';
+        } else {
+          clipContainer.style.display = 'none';
+        }
+      });
+  }
+
+  // --- CANVAS BOUNDING BOX RENDERER ---
+  function drawBoundingBoxes() {
+    if (!selectedEvent || clipContainer.style.display === 'none') {
+      ctx.clearRect(0, 0, boxCanvas.width, boxCanvas.height);
+      return;
+    }
+    const vw = clip.videoWidth || 640;
+    const vh = clip.videoHeight || 480;
+
+    if (boxCanvas.width !== clip.clientWidth || boxCanvas.height !== clip.clientHeight) {
+      boxCanvas.width = clip.clientWidth;
+      boxCanvas.height = clip.clientHeight;
+    }
+
+    ctx.clearRect(0, 0, boxCanvas.width, boxCanvas.height);
+    const sx = boxCanvas.width / vw;
+    const sy = boxCanvas.height / vh;
+    const dets = selectedEvent.detections || [];
+
+    dets.forEach(d => {
+      if (!d.bbox) return;
+      const x = d.bbox.x * sx;
+      const y = d.bbox.y * sy;
+      const w = d.bbox.width * sx;
+      const h = d.bbox.height * sy;
+
+      const isHuman = d.class === 'HUMAN';
+      ctx.strokeStyle = isHuman ? '#3b82f6' : '#f59e0b';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = isHuman ? 'rgba(59, 130, 246, 0.6)' : 'rgba(245, 158, 11, 0.6)';
+      ctx.shadowBlur = 8;
+      ctx.strokeRect(x, y, w, h);
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = isHuman ? '#3b82f6' : '#f59e0b';
+      const label = `${d.class} ${(d.confidence * 100).toFixed(0)}%`;
+      ctx.font = 'bold 11px sans-serif';
+      const tw = ctx.measureText(label).width;
+      ctx.fillRect(x, Math.max(0, y - 18), tw + 8, 18);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(label, x + 4, Math.max(13, y - 5));
+    });
+  }
+
+  btnPlayPause.onclick = () => {
+    if (clip.paused || clip.ended) {
+      clip.play();
+      btnPlayPause.innerText = '⏸ Pause';
+    } else {
+      clip.pause();
+      btnPlayPause.innerText = '▶ Play';
+    }
+  };
+
+  btnStepBack.onclick = () => { clip.currentTime = Math.max(0, clip.currentTime - 1.0); };
+  btnStepFwd.onclick = () => { clip.currentTime = Math.min(clip.duration, clip.currentTime + 1.0); };
+
+  clipScrubber.oninput = () => {
+    if (clip.duration) clip.currentTime = (clipScrubber.value / 100) * clip.duration;
+  };
+
+  clip.ontimeupdate = () => {
+    if (clip.duration) clipScrubber.value = (clip.currentTime / clip.duration) * 100;
+    drawBoundingBoxes();
+  };
+
+  const speeds = [0.5, 1.0, 2.0];
+  let speedIdx = 1;
+  btnSpeed.onclick = () => {
+    speedIdx = (speedIdx + 1) % speeds.length;
+    clip.playbackRate = speeds[speedIdx];
+    btnSpeed.innerText = speeds[speedIdx] + 'x';
+  };
+
+  btnLoop.onclick = () => {
+    clip.loop = !clip.loop;
+    btnLoop.classList.toggle('active', clip.loop);
+  };
+
+  clip.onplay = () => {
+    function loop() {
+      if (!clip.paused && !clip.ended) {
+        drawBoundingBoxes();
+        requestAnimationFrame(loop);
+      }
+    }
+    requestAnimationFrame(loop);
+  };
+  clip.onseeked = drawBoundingBoxes;
+  clip.onloadeddata = drawBoundingBoxes;
+  window.onresize = drawBoundingBoxes;
+
+  // --- NOTIFICATIONS & ALERTS (TAB 4) ---
+  function loadInitialNotifications() {
+    fetch('/notifications?limit=50')
+      .then(res => res.json())
+      .then(data => {
+        notifications = data.notifications || [];
+        updateNotificationCounts();
+        renderFullAlertsList();
+      });
+  }
+
+  function updateNotificationCounts() {
+    const unread = notifications.filter(n => !n.acknowledged).length;
+    tabAlertCount.innerText = unread;
+    quickAlertCount.innerText = unread;
+    altUnread.innerText = unread;
+    btnQuickAlerts.classList.toggle('btn-alert', unread > 0);
+  }
+
+  function renderFullAlertsList() {
+    if (!notifications.length) {
+      fullAlertsList.innerHTML = '<div class="inset" style="text-align:center"><small class="mut">No operator notifications recorded.</small></div>';
+      return;
+    }
+
+    fullAlertsList.innerHTML = notifications.map(n => `
+      <div class="alert-card ${n.severity === 'CRITICAL' ? 'critical' : 'medium'} ${n.acknowledged ? 'acked' : ''}">
+        <div style="flex:1;cursor:pointer" onclick="window.viewEventFromArchive('${n.event_id}')">
+          <div style="display:flex;align-items:center;gap:8px">
+            <b>${(n.detected_classes || []).join(' + ')}</b>
+            <span class="tag ${n.severity}">${n.severity}</span>
+          </div>
+          <small class="mut">Camera: ${n.source_id} &bull; Time: ${new Date(n.created_at * 1000).toLocaleString()}</small>
+        </div>
+        <div>
+          ${n.acknowledged ? '<small class="mut" style="font-weight:700">✓ Acknowledged</small>' : `<button class="btn btn-sm btn-ok" onclick="window.ackAlert('${n.alert_id}')">Acknowledge</button>`}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.ackAlert = function(alertId) {
+    fetch('/notifications/' + alertId + '/ack', { method: 'POST' })
+      .then(res => res.json())
+      .then(() => {
+        const a = notifications.find(n => n.alert_id === alertId);
+        if (a) a.acknowledged = true;
+        updateNotificationCounts();
+        renderFullAlertsList();
+      });
+  };
+
+  btnAckAll.onclick = () => {
+    notifications.filter(n => !n.acknowledged).forEach(n => {
+      fetch('/notifications/' + n.alert_id + '/ack', { method: 'POST' });
+      n.acknowledged = true;
+    });
+    updateNotificationCounts();
+    renderFullAlertsList();
+  };
+
+  btnRefreshAlerts.onclick = loadInitialNotifications;
+
+  btnSync.onclick = () => {
+    updateStatus();
+    loadInitialEvents();
+    loadInitialNotifications();
+  };
+
+  function loadInitialEvents() {
+    fetch('/events?limit=50')
+      .then(res => res.json())
+      .then(data => {
+        const list = data.events || [];
+        feed.innerHTML = '';
+        list.reverse().forEach(renderEventItem);
+        if (list.length > 0 && !selectedEvent) {
+          selectEvent(list[list.length - 1].event_id);
+        }
+        if (currentTab === 'events') renderEventsArchive();
+      });
+  }
+
+  // --- SSE STREAM ---
+  function initSSE() {
+    sseState.innerText = 'connecting…';
+    sseState.style.color = 'inherit';
+    const es = new EventSource('/events/stream');
+
+    es.onopen = () => {
+      sseState.innerText = 'connected';
+      sseState.style.color = 'var(--ok)';
+    };
+
+    es.onerror = () => {
+      sseState.innerText = 'reconnecting…';
+      sseState.style.color = 'var(--bad)';
+    };
+
+    es.onmessage = (e) => {
+      if (!e.data) return;
+      try {
+        const payload = JSON.parse(e.data);
+        if (payload.type === 'clip_ready') {
+          const ev = eventsMap.get(payload.event_id);
+          if (ev) {
+            ev.clip_path = payload.clip_url;
+            renderEventItem(ev);
+            if (selectedEvent && selectedEvent.event_id === payload.event_id) {
+              selectEvent(payload.event_id);
+            }
+          }
+        } else if (payload.type === 'notification') {
+          if (!notifications.some(n => n.alert_id === payload.alert_id)) {
+            notifications.unshift(payload);
+            updateNotificationCounts();
+            if (currentTab === 'alerts') renderFullAlertsList();
+            const isCrit = payload.severity === 'CRITICAL';
+            playAlertChime(isCrit);
+            showToast(`⚠️ [${payload.severity}] ${(payload.detected_classes || []).join('+')} detected!`, isCrit ? 'var(--bad)' : 'var(--warn)');
+          }
+        } else if (payload.event_id) {
+          renderEventItem(payload);
+        }
+      } catch (err) {}
+    };
+  }
+
+  // Startup
+  updateStatus();
+  loadInitialEvents();
+  loadInitialNotifications();
+  initSSE();
+  setInterval(updateStatus, 2500);
+  setInterval(refreshSnapshot, 800);
+})();
+</script>
+</body>
+</html>
